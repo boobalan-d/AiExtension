@@ -1,0 +1,1 @@
+Icons directory - copy the generated icon here as icon16.png, icon48.png, icon128.png

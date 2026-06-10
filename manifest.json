@@ -1,0 +1,62 @@
+{
+  "manifest_version": 3,
+  "name": "AiSolutions — AI Knowledge Extractor",
+  "version": "1.0.0",
+  "description": "Seamless knowledge extraction powered by Google Gemini. Select text or capture screen areas for instant AI explanations.",
+  "permissions": [
+    "sidePanel",
+    "storage",
+    "activeTab",
+    "contextMenus",
+    "scripting"
+  ],
+  "commands": {
+    "toggle-area-select": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+S",
+        "mac": "Command+Shift+S"
+      },
+      "description": "Toggle Area Selection for screenshot capture"
+    },
+    "summarize-page": {
+      "suggested_key": {
+        "default": "Alt+Shift+P",
+        "mac": "Alt+Shift+P"
+      },
+      "description": "Summarize the current page"
+    }
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "<all_urls>"
+      ],
+      "js": [
+        "content.js"
+      ],
+      "css": [
+        "content.css"
+      ],
+      "run_at": "document_idle"
+    }
+  ],
+  "side_panel": {
+    "default_path": "sidepanel.html"
+  },
+  "action": {
+    "default_title": "AiSolutions — Open Side Panel"
+  },
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "icons/*"
+      ],
+      "matches": [
+        "<all_urls>"
+      ]
+    }
+  ]
+}

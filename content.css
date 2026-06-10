@@ -1,0 +1,80 @@
+/**
+ * AiSolutions — Content Script Styles
+ * Floating "Answer" button — Obsidian + Gold palette
+ */
+
+#aisolutions-explain-btn {
+  position: absolute;
+  z-index: 2147483647;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 14px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  font-size: 12.5px;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+  white-space: nowrap;
+  pointer-events: auto;
+  user-select: none;
+
+  background: linear-gradient(135deg, #1a1a22 0%, #22222c 100%);
+  color: #c9a84e;
+  border: 1px solid rgba(201, 168, 78, 0.2);
+  box-shadow:
+    0 4px 20px rgba(0, 0, 0, 0.4),
+    0 1px 3px rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+
+  animation: ais-fadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  opacity: 0;
+  transform: scale(0.9) translateY(4px);
+}
+
+#aisolutions-explain-btn:hover {
+  background: linear-gradient(135deg, #1e1e28 0%, #282834 100%);
+  border-color: rgba(201, 168, 78, 0.35);
+  color: #dfc06a;
+  box-shadow:
+    0 6px 24px rgba(0, 0, 0, 0.45),
+    0 0 12px rgba(201, 168, 78, 0.1);
+  transform: scale(1.02);
+}
+
+#aisolutions-explain-btn:active {
+  transform: scale(0.97);
+}
+
+#aisolutions-explain-btn .ais-icon {
+  font-size: 12px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+}
+
+#aisolutions-explain-btn .ais-icon svg {
+  width: 13px;
+  height: 13px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 2.5;
+}
+
+#aisolutions-explain-btn .ais-label {
+  line-height: 1;
+}
+
+@keyframes ais-fadeIn {
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+#aisolutions-explain-btn.ais-fadeout {
+  animation: ais-fadeOut 0.12s ease-out forwards;
+}
+
+@keyframes ais-fadeOut {
+  to { opacity: 0; transform: scale(0.9) translateY(4px); }
+}
