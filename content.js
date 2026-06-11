@@ -56,27 +56,36 @@
     .ib.active{color:#c9a84e;background:rgba(201,168,78,0.1)}
     .ib svg{width:12px;height:12px}
 
-    /* Body */
-    .body{padding:12px 14px;max-height:350px;overflow-y:auto;overflow-x:hidden;font-size:13px;color:#d0d0cc;line-height:1.6;word-wrap:break-word;flex:1}
+    /* Body / Chat History */
+    .body{padding:12px 14px;max-height:350px;overflow-y:auto;overflow-x:hidden;font-size:13px;color:#d0d0cc;line-height:1.6;word-wrap:break-word;flex:1;display:flex;flex-direction:column;gap:12px;}
     .body::-webkit-scrollbar{width:3px}
     .body::-webkit-scrollbar-track{background:transparent}
     .body::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.06);border-radius:10px}
 
-    .body p{margin-bottom:7px}.body p:last-child{margin-bottom:0}
-    .body strong{color:#dfc06a;font-weight:600}
-    .body em{color:#a3a3a0}
-    .body code{background:rgba(201,168,78,0.08);padding:1px 5px;border-radius:3px;font-family:'SF Mono','Consolas',monospace;font-size:12px;color:#dfc06a}
-    .body pre{background:#09090b;border:1px solid rgba(255,255,255,0.05);border-radius:6px;padding:10px 12px;overflow-x:auto;margin:8px 0}
-    .body pre code{background:transparent;padding:0;font-size:12px;color:#a3a3a0}
-    .body ul,.body ol{padding-left:18px;margin:6px 0}
-    .body li{margin-bottom:3px}
-    .body h1,.body h2,.body h3,.body h4{font-weight:700;color:#c9a84e;margin:10px 0 4px}
-    .body h1{font-size:15px}.body h2{font-size:14.5px}.body h3{font-size:14px}
-    .body blockquote{border-left:2px solid #a68a3a;padding-left:12px;margin:8px 0;color:#a3a3a0;font-style:italic}
-    .body a{color:#c9a84e;text-decoration:none}.body a:hover{text-decoration:underline}
-    .body table{width:100%;border-collapse:collapse;margin:8px 0;font-size:12px}
-    .body th,.body td{padding:5px 8px;border:1px solid rgba(255,255,255,0.05);text-align:left}
-    .body th{background:rgba(201,168,78,0.05);font-weight:600;color:#c9a84e}
+    /* Chat Bubbles */
+    .msg-user { align-self:flex-end; max-width:85%; background:rgba(201,168,78,0.1); color:#eaeae8; padding:8px 12px; border-radius:12px 12px 2px 12px; }
+    .msg-ai { align-self:flex-start; width:100%; position:relative; margin-bottom:8px; }
+    .msg-actions { display:flex; gap:6px; margin-top:6px; opacity:0; transition:opacity 0.2s ease; padding-left:2px; }
+    .msg-ai:hover .msg-actions { opacity:1; }
+    .msg-btn { display:flex; align-items:center; gap:4px; padding:3px 8px; font-size:10px; font-weight:500; font-family:inherit; color:#6b6b68; background:transparent; border:1px solid rgba(255,255,255,0.05); border-radius:5px; cursor:pointer; transition:all 0.15s ease; }
+    .msg-btn:hover { color:#c9a84e; background:rgba(201,168,78,0.05); border-color:rgba(201,168,78,0.2); }
+    .msg-btn svg { width:11px; height:11px; }
+    
+    .msg-ai p{margin-bottom:7px}.msg-ai p:last-child{margin-bottom:0}
+    .msg-ai strong{color:#dfc06a;font-weight:600}
+    .msg-ai em{color:#a3a3a0}
+    .msg-ai code{background:rgba(201,168,78,0.08);padding:1px 5px;border-radius:3px;font-family:'SF Mono','Consolas',monospace;font-size:12px;color:#dfc06a}
+    .msg-ai pre{background:#09090b;border:1px solid rgba(255,255,255,0.05);border-radius:6px;padding:10px 12px;overflow-x:auto;margin:8px 0}
+    .msg-ai pre code{background:transparent;padding:0;font-size:12px;color:#a3a3a0}
+    .msg-ai ul,.msg-ai ol{padding-left:18px;margin:6px 0}
+    .msg-ai li{margin-bottom:3px}
+    .msg-ai h1,.msg-ai h2,.msg-ai h3,.msg-ai h4{font-weight:700;color:#c9a84e;margin:10px 0 4px}
+    .msg-ai h1{font-size:15px}.msg-ai h2{font-size:14.5px}.msg-ai h3{font-size:14px}
+    .msg-ai blockquote{border-left:2px solid #a68a3a;padding-left:12px;margin:8px 0;color:#a3a3a0;font-style:italic}
+    .msg-ai a{color:#c9a84e;text-decoration:none}.msg-ai a:hover{text-decoration:underline}
+    .msg-ai table{width:100%;border-collapse:collapse;margin:8px 0;font-size:12px}
+    .msg-ai th,.msg-ai td{padding:5px 8px;border:1px solid rgba(255,255,255,0.05);text-align:left}
+    .msg-ai th{background:rgba(201,168,78,0.05);font-weight:600;color:#c9a84e}
 
     /* Quick actions bar */
     .qbar{display:flex;gap:4px;padding:8px 12px;border-top:1px solid rgba(255,255,255,0.04);flex-wrap:wrap}
@@ -134,6 +143,24 @@
     .resize-h:hover{opacity:0.6}
     .resize-h::after{content:'';position:absolute;bottom:4px;right:4px;width:6px;height:6px;border-right:2px solid #5a5a55;border-bottom:2px solid #5a5a55}
 
+    /* Tabs & Type View */
+    .popup-tabs { display:flex; gap:2px; background:rgba(0,0,0,0.2); padding:2px; border-radius:6px; border:1px solid rgba(255,255,255,0.05); }
+    .ptab { display:flex; align-items:center; gap:4px; padding:3px 8px; font-size:10.5px; font-weight:600; font-family:inherit; color:#6b6b68; background:transparent; border:none; border-radius:4px; cursor:pointer; text-transform:uppercase; letter-spacing:0.4px; transition:all 0.15s; }
+    .ptab:hover { color:#a3a3a0; }
+    .ptab.active { background:rgba(201,168,78,0.15); color:#c9a84e; }
+    .ptab svg { width:11px; height:11px; stroke:currentColor; }
+    
+    .view-container { display:none; flex-direction:column; flex:1; overflow:hidden; }
+    .view-container.active { display:flex; }
+    
+    .type-view-body { padding:12px 14px; flex:1; display:flex; flex-direction:column; gap:10px; overflow-y:auto; }
+    .type-textarea { flex:1; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.06); border-radius:8px; padding:10px; color:#eaeae8; font-size:12.5px; font-family:'SF Mono', 'Consolas', monospace; outline:none; resize:vertical; min-height:150px; }
+    .type-textarea:focus { border-color:rgba(201,168,78,0.25); }
+    .type-textarea::placeholder { color:#5a5a55; }
+    .type-start-btn { padding:10px; background:linear-gradient(135deg,#c9a84e,#a68a3a); color:#09090b; border:none; border-radius:6px; font-weight:600; cursor:pointer; display:flex; justify-content:center; align-items:center; gap:6px; transition:all 0.15s; font-size:13px; }
+    .type-start-btn:hover { opacity:0.9; transform:translateY(-1px); box-shadow:0 4px 12px rgba(201,168,78,0.2); }
+    .type-start-btn:active { transform:translateY(0); }
+
     @keyframes popIn{to{opacity:1;transform:scale(1) translateY(0)}}
     @keyframes popOut{to{opacity:0;transform:scale(.93) translateY(6px)}}
     @keyframes slide{to{left:100%}}
@@ -184,12 +211,14 @@
 
     const popup = document.createElement('div'); popup.className = 'popup';
 
-    // ── Header (draggable) ──
+    // ── Header (draggable & tabs) ──
     const hdr = document.createElement('div'); hdr.className = 'hdr';
     hdr.innerHTML = `
       <div class="hdr-left">
-        <span class="mark">${ICO.bolt}</span>
-        <span>AI Answer</span>
+        <div class="popup-tabs">
+          <button class="ptab active" id="tab-ai">${ICO.bolt} Answer</button>
+          <button class="ptab" id="tab-type">${ICO.keyboard} Type It</button>
+        </div>
         <span class="grip">${ICO.move}</span>
       </div>
       <div class="acts">
@@ -199,16 +228,30 @@
       </div>`;
     popup.appendChild(hdr);
 
-    // ── Body ──
+    // ── Views Container ──
+    const views = document.createElement('div');
+    views.style.display = 'flex';
+    views.style.flexDirection = 'column';
+    views.style.flex = '1';
+    views.style.overflow = 'hidden';
+    popup.appendChild(views);
+
+    // AI View
+    const aiView = document.createElement('div');
+    aiView.className = 'view-container active';
+    aiView.id = 'ai-view';
+    views.appendChild(aiView);
+
+    // ── Body (AI Answer) ──
     const body = document.createElement('div'); body.className = 'body';
     body.innerHTML = '<div class="loading"><div class="bar-wrap"></div><span>Thinking</span></div>';
-    popup.appendChild(body);
+    aiView.appendChild(body);
 
     // ── Quick Actions Bar ──
     const qbar = document.createElement('div'); qbar.className = 'qbar';
     qbar.style.display = 'none';
     const actions = [
-      { id: 'typeit', icon: ICO.keyboard, label: 'Type it' },
+      { id: 'typeit', icon: ICO.keyboard, label: 'Type It' },
       { id: 'simplify', icon: ICO.simplify, label: 'Simplify', prompt: `Rewrite the following answer in much simpler terms, as if explaining to a beginner. Keep it very short.\n\nOriginal answer:` },
       { id: 'expand', icon: ICO.expand, label: 'Expand', prompt: `Expand and elaborate on the following answer with more details, examples, and depth.\n\nOriginal answer:` },
       { id: 'translate', icon: ICO.translate, label: 'Translate', prompt: `Translate the following answer into simple, clear Hindi (Devanagari script). Keep formatting.\n\nOriginal answer:` },
@@ -219,7 +262,7 @@
       btn.innerHTML = `${a.icon} ${a.label}`;
       qbar.appendChild(btn);
     });
-    popup.appendChild(qbar);
+    aiView.appendChild(qbar);
 
     // ── Chat Follow-up Bar ──
     const chatBar = document.createElement('div'); chatBar.className = 'chat-bar';
@@ -230,7 +273,20 @@
     const chatSend = document.createElement('button'); chatSend.className = 'chat-send';
     chatSend.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>';
     chatBar.appendChild(chatInput); chatBar.appendChild(chatSend);
-    popup.appendChild(chatBar);
+    aiView.appendChild(chatBar);
+
+    // ── Type View ──
+    const typeView = document.createElement('div');
+    typeView.className = 'view-container';
+    typeView.id = 'type-view';
+    typeView.innerHTML = `
+      <div class="type-view-body">
+        <div style="font-size:11.5px;color:#a3a3a0;line-height:1.4;">Paste your text here. It will be typed exactly as-is, preserving all spacing and formatting.</div>
+        <textarea class="type-textarea" id="type-textarea" placeholder="Paste your text here..."></textarea>
+        <button class="type-start-btn" id="type-start-btn">${ICO.keyboard} Select Input Field & Type</button>
+      </div>
+    `;
+    views.appendChild(typeView);
 
     // ── Footer ──
     const foot = document.createElement('div'); foot.className = 'foot';
@@ -246,6 +302,8 @@
     curPopup = host;
 
     let rawText = '', origQuestion = question;
+    let conversation = [{ role: 'user', content: `You are a precise answer engine. If the selection is a question, answer it directly. If it's a concept, explain briefly. If it's a problem (math, code, etc.), solve step by step. Be concise. Use markdown.\n\nSelected text: "${question}"` }];
+    let currentStreamAbort = null;
 
     // ── Drag Logic ──
     let isDragging = false, dragOffX = 0, dragOffY = 0;
@@ -297,19 +355,33 @@
       document.removeEventListener('mouseup', onResizeEnd);
     };
 
+    // ── Tab Listeners ──
+    const tabAi = shadow.querySelector('#tab-ai');
+    const tabType = shadow.querySelector('#tab-type');
+
+    tabAi.addEventListener('click', () => {
+      tabAi.classList.add('active'); tabType.classList.remove('active');
+      aiView.classList.add('active'); typeView.classList.remove('active');
+    });
+
+    tabType.addEventListener('click', () => {
+      tabType.classList.add('active'); tabAi.classList.remove('active');
+      typeView.classList.add('active'); aiView.classList.remove('active');
+    });
+
     // ── Button Handlers ──
-    shadow.getElementById('cl').addEventListener('click', rmPopup);
+    shadow.querySelector('#cl').addEventListener('click', rmPopup);
 
     // Pin toggle
-    shadow.getElementById('pin').addEventListener('click', () => {
+    shadow.querySelector('#pin').addEventListener('click', () => {
       pinned = !pinned;
-      const pinBtn = shadow.getElementById('pin');
+      const pinBtn = shadow.querySelector('#pin');
       pinBtn.classList.toggle('active', pinned);
       pinBtn.title = pinned ? 'Unpin' : 'Pin (keep open)';
     });
 
     // Copy
-    shadow.getElementById('cp').addEventListener('click', () => {
+    shadow.querySelector('#cp').addEventListener('click', () => {
       if (!rawText) return;
       navigator.clipboard.writeText(rawText).then(() => {
         const t = document.createElement('div'); t.className = 'toast'; t.textContent = 'Copied';
@@ -325,31 +397,54 @@
       qbar.style.display = 'flex';
       chatBar.style.display = 'flex';
 
-      // Type it
-      shadow.getElementById('q-typeit')?.addEventListener('click', () => startTypeMode());
+      // Type It - auto populate and switch to type tab
+      shadow.querySelector('#q-typeit')?.addEventListener('click', () => {
+        // Strip markdown so it types cleanly
+        const cleanText = stripMd(rawText);
+        shadow.querySelector('#type-textarea').value = cleanText;
+        // Switch to the Type It tab
+        tabType.classList.add('active'); tabAi.classList.remove('active');
+        typeView.classList.add('active'); aiView.classList.remove('active');
+      });
+
       // Simplify
-      shadow.getElementById('q-simplify')?.addEventListener('click', () => followUp('simplify', actions[1].prompt + ` "${rawText}"`));
+      shadow.querySelector('#q-simplify')?.addEventListener('click', () => followUp('simplify', actions[1].prompt + ` "${rawText}"`));
       // Expand
-      shadow.getElementById('q-expand')?.addEventListener('click', () => followUp('expand', actions[2].prompt + ` "${rawText}"`));
+      shadow.querySelector('#q-expand')?.addEventListener('click', () => followUp('expand', actions[2].prompt + ` "${rawText}"`));
       // Translate
-      shadow.getElementById('q-translate')?.addEventListener('click', () => followUp('translate', actions[3].prompt + ` "${rawText}"`));
+      shadow.querySelector('#q-translate')?.addEventListener('click', () => followUp('translate', actions[3].prompt + ` "${rawText}"`));
       // Google it
-      shadow.getElementById('q-search')?.addEventListener('click', () => {
+      shadow.querySelector('#q-search')?.addEventListener('click', () => {
         window.open(`https://www.google.com/search?q=${encodeURIComponent(origQuestion)}`, '_blank');
       });
 
       // Chat follow-up
       function sendFollowUp() {
         const q = chatInput.value.trim();
-        if (!q || answering) return;
+        if (answering) {
+          if (currentStreamAbort) currentStreamAbort();
+          return;
+        }
+        if (!q) return;
         chatInput.value = '';
-        const contextPrompt = `Context from previous answer:\n"${rawText}"\n\nUser's follow-up question: ${q}\n\nAnswer concisely using markdown.`;
+        
+        // Add user bubble
+        const uBubble = document.createElement('div');
+        uBubble.className = 'msg msg-user';
+        uBubble.innerHTML = `<div class="msg-content">${esc(q)}</div>`;
+        body.appendChild(uBubble);
+        body.scrollTop = body.scrollHeight;
+
+        conversation.push({ role: 'user', content: q });
+        
         answering = true;
+        chatSend.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="6" width="12" height="12"/></svg>';
         qbar.querySelectorAll('.qbtn').forEach(b => b.classList.add('loading'));
-        body.innerHTML = '<div class="loading"><div class="bar-wrap"></div><span>Thinking</span></div>';
-        streamAnswer(contextPrompt, body, () => {
+        
+        streamAnswer(conversation, body, () => {
           qbar.querySelectorAll('.qbtn').forEach(b => b.classList.remove('loading'));
           answering = false;
+          chatSend.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>';
         });
       }
       chatSend.addEventListener('click', sendFollowUp);
@@ -361,13 +456,19 @@
     // ── Type-it Mode ──
     let typeClickCleanup = null; // store cleanup so we can cancel
 
-    function startTypeMode() {
-      if (!rawText) return;
+    shadow.querySelector('#type-start-btn').addEventListener('click', () => {
+      const typeText = shadow.querySelector('#type-textarea').value;
+      if (!typeText) return;
+      startTypeMode(typeText);
+    });
+
+    function startTypeMode(textToType) {
+      if (!textToType) return;
       // Cancel any previous type-mode listener
       if (typeClickCleanup) { typeClickCleanup(); typeClickCleanup = null; }
 
       pinned = true;
-      const pinBtn = shadow.getElementById('pin');
+      const pinBtn = shadow.querySelector('#pin');
       if (pinBtn) { pinBtn.classList.add('active'); pinBtn.title = 'Unpin'; }
 
       // Show overlay in popup
@@ -469,7 +570,7 @@
           typingAbort = new AbortController();
           stopBtn.addEventListener('click', () => typingAbort.abort());
 
-          typeIntoField(target, stripMd(rawText), typingSpeed, progressBar, typingAbort.signal).then((ok) => {
+          typeIntoField(target, textToType, typingSpeed, progressBar, typingAbort.signal).then((ok) => {
             typePanel.innerHTML = `<div class="type-msg" style="color:${ok ? '#4cad6a' : '#e8a09e'};animation:none">${ok ? '✓ Typed successfully!' : 'Stopped.'}</div>`;
             setTimeout(() => { if (typePanel.parentNode) typePanel.remove(); }, 2500);
           });
@@ -498,12 +599,22 @@
       const btn = shadow.getElementById(`q-${id}`);
       if (!btn || answering) return;
       if (!isAlive()) { selfDestruct(); return; }
+      
+      const uBubble = document.createElement('div');
+      uBubble.className = 'msg msg-user';
+      uBubble.innerHTML = `<div class="msg-content">${esc(prompt)}</div>`;
+      body.appendChild(uBubble);
+      body.scrollTop = body.scrollHeight;
+      
+      conversation.push({ role: 'user', content: prompt });
+      
       qbar.querySelectorAll('.qbtn').forEach(b => b.classList.add('loading'));
       answering = true;
-      body.innerHTML = '<div class="loading"><div class="bar-wrap"></div><span>Thinking</span></div>';
-      streamAnswer(prompt, body, () => {
+      chatSend.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="6" width="12" height="12"/></svg>';
+      streamAnswer(conversation, body, () => {
         qbar.querySelectorAll('.qbtn').forEach(b => b.classList.remove('loading'));
         answering = false;
+        chatSend.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>';
       });
     }
 
@@ -515,7 +626,14 @@
     });
 
     // ── Stream API via port ──
-    streamAnswer(question, body, () => {
+    body.innerHTML = ''; // Clear initial thinking state
+    const uBubble = document.createElement('div');
+    uBubble.className = 'msg msg-user';
+    uBubble.innerHTML = `<div class="msg-content">${esc(origQuestion)}</div>`;
+    body.appendChild(uBubble);
+    body.scrollTop = body.scrollHeight;
+
+    streamAnswer(conversation, body, () => {
       answering = false;
       attachQuickActions();
       requestAnimationFrame(() => {
@@ -526,20 +644,29 @@
     });
 
     // Streaming helper with elapsed timer and abort support
-    function streamAnswer(text, targetBody, onDone) {
+    function streamAnswer(messages, targetContainer, onDone) {
       if (!isAlive()) {
-        targetBody.innerHTML = '<div class="err">Extension was reloaded. Please refresh this page.</div>';
+        const err = document.createElement('div'); err.className = 'err'; err.textContent = 'Extension reloaded. Refresh page.';
+        targetContainer.appendChild(err);
         onDone?.(); return;
       }
+      
+      const aiBubble = document.createElement('div');
+      aiBubble.className = 'msg msg-ai';
+      const aiContent = document.createElement('div');
+      aiContent.className = 'msg-content';
+      aiBubble.appendChild(aiContent);
+      targetContainer.appendChild(aiBubble);
+      targetContainer.scrollTop = targetContainer.scrollHeight;
+      
       let port, accumulated = '', finished = false, aborted = false;
-      const finish = () => { if (finished) return; finished = true; clearInterval(tick); onDone?.(); };
+      const finish = () => { if (finished) return; finished = true; clearInterval(tick); currentStreamAbort = null; onDone?.(); };
 
-      // Show loading UI with timer and abort button
+      // Show loading UI
       const startTime = Date.now();
-      targetBody.innerHTML = '<div class="loading"><div class="bar-wrap"></div><span>Connecting</span></div><div class="load-status"></div><div class="load-timer">0s</div><button class="load-abort">Cancel</button>';
-      const statusEl = targetBody.querySelector('.load-status');
-      const timerEl = targetBody.querySelector('.load-timer');
-      const abortBtn = targetBody.querySelector('.load-abort');
+      aiContent.innerHTML = '<div class="loading"><div class="bar-wrap"></div><span>Connecting</span></div><div class="load-status"></div><div class="load-timer">0s</div>';
+      const statusEl = aiContent.querySelector('.load-status');
+      const timerEl = aiContent.querySelector('.load-timer');
       const tick = setInterval(() => {
         if (timerEl) timerEl.textContent = Math.round((Date.now() - startTime) / 1000) + 's';
       }, 1000);
@@ -548,19 +675,20 @@
         port = chrome.runtime.connect({ name: 'inline-stream' });
       } catch (e) {
         clearInterval(tick);
-        targetBody.innerHTML = '<div class="err">Extension was reloaded. Please refresh this page.</div>';
+        aiContent.innerHTML = '<div class="err">Extension was reloaded. Please refresh this page.</div>';
         finish(); return;
       }
 
-      // Abort button handler
-      abortBtn?.addEventListener('click', () => {
+      currentStreamAbort = () => {
+        if (finished || aborted) return;
         aborted = true;
         try { port.disconnect(); } catch (e) {}
-        targetBody.innerHTML = '<div class="err">Cancelled. Select text again to retry.</div>';
+        aiContent.innerHTML += '<div class="err">Stopped.</div>';
+        if (accumulated) conversation.push({ role: 'assistant', content: accumulated });
         finish();
-      });
+      };
 
-      port.postMessage({ type: 'INLINE_ANSWER_STREAM', text });
+      port.postMessage({ type: 'INLINE_ANSWER_STREAM', messages });
       port.onMessage.addListener((msg) => {
         if (aborted) return;
         if (msg.type === 'status' && statusEl) {
@@ -568,14 +696,52 @@
         } else if (msg.type === 'chunk') {
           accumulated += msg.content;
           rawText = accumulated;
-          targetBody.innerHTML = renderMd(accumulated);
+          aiContent.innerHTML = renderMd(accumulated);
+          targetContainer.scrollTop = targetContainer.scrollHeight;
         } else if (msg.type === 'done') {
           try { port.disconnect(); } catch (e) {}
-          if (!accumulated) targetBody.innerHTML = '<div class="err">No response received.</div>';
+          if (!accumulated) aiContent.innerHTML = '<div class="err">No response received.</div>';
+          else {
+            conversation.push({ role: 'assistant', content: accumulated });
+            // Add per-message action buttons
+            const actionsDiv = document.createElement('div');
+            actionsDiv.className = 'msg-actions';
+            
+            const btnCopy = document.createElement('button');
+            btnCopy.className = 'msg-btn';
+            btnCopy.innerHTML = `${ICO.copy} Copy`;
+            btnCopy.addEventListener('click', () => {
+              navigator.clipboard.writeText(accumulated).then(() => {
+                const oldHtml = btnCopy.innerHTML;
+                btnCopy.innerHTML = `${ICO.check} Copied`;
+                setTimeout(() => { btnCopy.innerHTML = oldHtml; }, 1500);
+              });
+            });
+
+            const btnTypeIt = document.createElement('button');
+            btnTypeIt.className = 'msg-btn';
+            btnTypeIt.innerHTML = `${ICO.keyboard} Type It`;
+            btnTypeIt.addEventListener('click', () => {
+              const cleanText = stripMd(accumulated);
+              shadow.querySelector('#type-textarea').value = cleanText;
+              const tabType = shadow.querySelector('#tab-type');
+              const tabAi = shadow.querySelector('#tab-ai');
+              const typeView = shadow.querySelector('#type-view');
+              const aiView = shadow.querySelector('#ai-view');
+              
+              tabType.classList.add('active'); tabAi.classList.remove('active');
+              typeView.classList.add('active'); aiView.classList.remove('active');
+            });
+
+            actionsDiv.appendChild(btnCopy);
+            actionsDiv.appendChild(btnTypeIt);
+            aiBubble.appendChild(actionsDiv);
+            targetContainer.scrollTop = targetContainer.scrollHeight;
+          }
           finish();
         } else if (msg.type === 'error') {
           try { port.disconnect(); } catch (e) {}
-          targetBody.innerHTML = `<div class="err"><b>Error:</b> ${esc(msg.error)}</div>`;
+          aiContent.innerHTML = `<div class="err"><b>Error:</b> ${esc(msg.error)}</div>`;
           finish();
         }
       });
@@ -746,17 +912,47 @@
 
   /* ── Human Typing Engine ────────────────────────────────── */
   async function typeIntoField(el, text, speed, progressBar, signal) {
-    const total = text.length;
+    // Tokenize to prevent IDE auto-indent and auto-close issues.
+    // If speed is 0 (Instant), insert everything at once to bypass IDE hooks entirely.
+    let tokens = [];
+    if (speed === 0) {
+      tokens = [text];
+    } else {
+      let i = 0;
+      while (i < text.length) {
+        if (text[i] === '\n' || text[i] === '\r') {
+          // Group newline and following spaces into a single token.
+          // IDEs treat multi-char inserts as a "paste" and skip auto-indenting them.
+          let token = text[i];
+          i++;
+          if (token === '\r' && text[i] === '\n') { token += '\n'; i++; }
+          while (i < text.length && (text[i] === ' ' || text[i] === '\t')) { token += text[i]; i++; }
+          tokens.push(token);
+        } else {
+          // Group regular chars into pairs to bypass single-char auto-close hooks (like brackets)
+          let token = '';
+          while (i < text.length && text[i] !== '\n' && text[i] !== '\r') {
+            token += text[i];
+            i++;
+            if (token.length >= 2) break;
+          }
+          if (token) tokens.push(token);
+        }
+      }
+    }
 
-    for (let i = 0; i < total; i++) {
+    const total = text.length;
+    let charsTyped = 0;
+
+    for (let t = 0; t < tokens.length; t++) {
       if (signal?.aborted) return false;
 
-      const char = text[i];
+      const token = tokens[t];
       el.focus();
 
       // Primary: execCommand works on BOTH input/textarea AND contentEditable
       let inserted = false;
-      try { inserted = document.execCommand('insertText', false, char); } catch (e) {}
+      try { inserted = document.execCommand('insertText', false, token); } catch (e) {}
 
       if (!inserted) {
         if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
@@ -765,31 +961,34 @@
           const pos = el.selectionStart ?? el.value.length;
           const before = el.value.slice(0, pos);
           const after = el.value.slice(el.selectionEnd ?? pos);
-          if (nativeSet) nativeSet.call(el, before + char + after);
-          else el.value = before + char + after;
-          el.selectionStart = el.selectionEnd = pos + 1;
-          el.dispatchEvent(new InputEvent('input', { inputType: 'insertText', data: char, bubbles: true }));
+          if (nativeSet) nativeSet.call(el, before + token + after);
+          else el.value = before + token + after;
+          el.selectionStart = el.selectionEnd = pos + token.length;
+          el.dispatchEvent(new InputEvent('input', { inputType: 'insertText', data: token, bubbles: true }));
         } else {
-          el.dispatchEvent(new InputEvent('beforeinput', { inputType: 'insertText', data: char, bubbles: true, cancelable: true }));
+          el.dispatchEvent(new InputEvent('beforeinput', { inputType: 'insertText', data: token, bubbles: true, cancelable: true }));
           const sel = window.getSelection();
           if (sel.rangeCount) {
             const range = sel.getRangeAt(0);
             range.deleteContents();
-            range.insertNode(document.createTextNode(char));
+            range.insertNode(document.createTextNode(token));
             range.collapse(false);
           }
-          el.dispatchEvent(new InputEvent('input', { inputType: 'insertText', data: char, bubbles: true }));
+          el.dispatchEvent(new InputEvent('input', { inputType: 'insertText', data: token, bubbles: true }));
         }
       }
 
+      charsTyped += token.length;
       if (progressBar) {
-        progressBar.style.width = Math.round(((i + 1) / total) * 100) + '%';
+        progressBar.style.width = Math.round((charsTyped / total) * 100) + '%';
       }
 
       if (speed > 0) {
-        const jitter = speed * 0.4 * (Math.random() - 0.5);
-        await new Promise(r => setTimeout(r, speed + jitter));
-      } else if (i % 50 === 0) {
+        // Delay scaled by token length so the overall WPM typing speed remains identical
+        const baseDelay = speed * token.length;
+        const jitter = speed * 0.4 * (Math.random() - 0.5) * token.length;
+        await new Promise(r => setTimeout(r, baseDelay + jitter));
+      } else if (t % 50 === 0) {
         await new Promise(r => setTimeout(r, 0));
       }
     }
@@ -803,8 +1002,15 @@
     setTimeout(() => {
       const sel = getSelection(); const txt = sel?.toString().trim();
       if (txt?.length > 2 && !answering) {
-        const r = sel.getRangeAt(0).getBoundingClientRect();
-        mkBtn(r.left, r.top, txt); // Position above selection
+        const range = sel.getRangeAt(0);
+        const rects = range.getClientRects();
+        if (rects.length > 0) {
+          const lastRect = rects[rects.length - 1];
+          mkBtn(lastRect.right, lastRect.bottom, txt); // Position at the end of selection
+        } else {
+          const r = range.getBoundingClientRect();
+          mkBtn(r.right, r.bottom, txt);
+        }
       } else if (!answering) rmBtn();
     }, 10);
   });
@@ -818,10 +1024,9 @@
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') { rmBtn(); rmPopup(); }
   });
-
-  document.addEventListener('aisolutions-answer', (e) => {
-    if (!isAlive()) { selfDestruct(); return; }
-    if (!e.detail || answering) return;
-    showPopup(scrollX + innerWidth / 2 - 200, scrollY + 80, e.detail);
-  });
+document.addEventListener('aisolutions-answer', (e) => {
+  if (!isAlive()) { selfDestruct(); return; }
+  if (!e.detail || answering) return;
+  showPopup(scrollX + innerWidth / 2 - 200, scrollY + 80, e.detail);
+});
 })();

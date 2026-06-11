@@ -11,7 +11,7 @@ const REFERER = 'https://github.com/ai-sidekick';
 const INLINE_MODELS = [
   'google/gemma-4-26b-a4b-it:free',     // Compact Gemma 4, fast
   'qwen/qwen3-coder:free',              // Reliable coder model
-  'openrouter/auto'                       // Let OpenRouter pick
+'openrouter/free'                       // Let OpenRouter pick
 ];
 const INLINE_TIMEOUT_MS = 12000; // 12 seconds per model attempt
 
@@ -131,12 +131,17 @@ chrome.runtime.onMessage.addListener((msg, sender, respond) => {
 });
 
 /* ── Streaming with Model Cascade ────────────────────────── */
-async function tryStreamModel(model, key, text, port) {
+async function tryStreamModel(model, key, payload, port) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), INLINE_TIMEOUT_MS);
 
   try {
     port.postMessage({ type: 'status', text: `Connecting to ${model.split('/')[1]?.split(':')[0] || model}...` });
+
+    let messages = payload.messages;
+    if (!messages) {
+      messages = [{ role: 'user', content: `You are a precise answer engine. If the selection is a question, answer it directly. If it's a concept, explain briefly. If it's a problem (math, code, etc.), solve step by step. Be concise. Use markdown.\n\nSelected text: "${payload.text}"` }];
+    }
 
     const res = await fetch(API_URL, {
       method: 'POST',
@@ -144,8 +149,8 @@ async function tryStreamModel(model, key, text, port) {
       signal: controller.signal,
       body: JSON.stringify({
         model,
-        messages: [{ role: 'user', content: `You are a precise answer engine. If the selection is a question, answer it directly. If it's a concept, explain briefly. If it's a problem (math, code, etc.), solve step by step. Be concise. Use markdown.\n\nSelected text: "${text}"` }],
-        max_tokens: 768,
+        messages,
+        max_tokens: 8192,
         temperature: 0.3,
         stream: true
       })
@@ -175,11 +180,11 @@ async function tryStreamModel(model, key, text, port) {
       if (done) break;
 
       buffer += decoder.decode(value, { stream: true });
-      const parts = buffer.split('\n\n');
-      buffer = parts.pop();
+      const lines = buffer.split('\n');
+      buffer = lines.pop();
 
-      for (const part of parts) {
-        const line = part.trim();
+      for (const rawLine of lines) {
+        const line = rawLine.trim();
         if (line.startsWith('data: ') && line !== 'data: [DONE]') {
           try {
             const parsed = JSON.parse(line.slice(6));
@@ -226,7 +231,7 @@ chrome.runtime.onConnect.addListener((port) => {
       for (let i = 0; i < INLINE_MODELS.length; i++) {
         const model = INLINE_MODELS[i];
         try {
-          success = await tryStreamModel(model, key, msg.text, port);
+          success = await tryStreamModel(model, key, msg, port);
           if (success) break;
           // Model timed out or rate-limited, try next
           if (i < INLINE_MODELS.length - 1) {
