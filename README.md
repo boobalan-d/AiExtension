@@ -97,5 +97,5 @@ Contributions, issues, and feature requests are highly welcome! We are specifica
 ---
 
 <div align="center">
-  <p>Built with 🖤 by [Your Name]. Elevating the standard for browser extensions.</p>
+  <p>Built with 🖤 by boobalan. Elevating the standard for browser extensions.</p>
 </div>
