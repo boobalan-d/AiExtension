@@ -20,7 +20,7 @@
 
 ## ⚡ Overview
 
-**AiSolutions** is a next-generation Chrome extension designed for students, researchers, and developers who need answers without breaking their flow. By leveraging the OpenRouter API, it provides a seamless, streaming ChatGPT-style interface directly over any webpage. 
+**AiSolutions** is a next-generation Chrome extension designed for students, researchers, and developers who need answers without breaking their flow. By leveraging the GitHub Models API, it provides a seamless, streaming ChatGPT-style interface directly over any webpage. 
 
 Unlike traditional extensions that shove you into a clunky side panel, AiSolutions uses advanced **Shadow DOM isolation** to float a premium, glassmorphism UI precisely where your cursor is. 
 
@@ -54,7 +54,7 @@ AiSolutions is built entirely with Vanilla JavaScript, maximizing performance an
 
 | Component | Responsibility | Highlight |
 | :--- | :--- | :--- |
-| `background.js` | Service Worker | Orchestrates the OpenRouter API connection, manages the Server-Sent Events (SSE) stream, and securely stores the API key. |
+| `background.js` | Service Worker | Orchestrates the GitHub Models API connection, manages the Server-Sent Events (SSE) stream, and securely stores the API key. |
 | `content.js` | UI Injector & DOM Engine | Mounts the Shadow DOM popup, calculates dynamic X/Y bounds, handles the ChatGPT-style conversation array, and runs the `typeIntoField` algorithm. |
 | `content.css` | Styling & Animations | Delivers the premium UI. Employs `-webkit-mask` composite gradients for glowing borders and hardware-accelerated transforms. |
 
@@ -71,7 +71,7 @@ AiSolutions is built entirely with Vanilla JavaScript, maximizing performance an
 4. Click the **Load unpacked** button and select the `AiSolutions` directory.
 5. The extension is now installed! 
 
-*Note: To use the extension, ensure you have configured your OpenRouter API Key within the background script or extension options (if configured).*
+*Note: To use the extension, ensure you have configured your GitHub PAT within the extension settings.*
 
 ---
 

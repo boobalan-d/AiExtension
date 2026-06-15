@@ -121,9 +121,17 @@
     .math-text { font-family:-apple-system, sans-serif; font-style:normal; }
 
     /* Chat input */
-    .chat-bar { display:flex; gap:8px; padding:10px 14px; border-top:1px solid rgba(255, 255, 255, 0.05); align-items:center; background:rgba(0, 0, 0, 0.2); }
-    .chat-input { flex:1; background:rgba(255, 255, 255, 0.05); border:1px solid rgba(255, 255, 255, 0.08); border-radius:10px; padding:8px 12px; color:#eaeae8; font-size:12.5px; font-family:inherit; outline:none; transition:all 0.2s ease; resize:none; min-height:18px; max-height:80px; }
-    .chat-input:focus { border-color:rgba(201, 168, 78, 0.4); background:rgba(255, 255, 255, 0.08); box-shadow:0 0 0 3px rgba(201, 168, 78, 0.1); }
+    .chat-bar { display:flex; gap:8px; padding:10px 14px; border-top:1px solid rgba(255, 255, 255, 0.05); align-items:flex-end; background:rgba(0, 0, 0, 0.2); }
+    .chat-attach { width:32px; height:32px; display:flex; align-items:center; justify-content:center; background:transparent; border:none; border-radius:8px; color:#888884; cursor:pointer; transition:all 0.2s ease; flex-shrink:0; }
+    .chat-attach:hover { color:#eaeae8; background:rgba(255, 255, 255, 0.08); }
+    .chat-attach svg { width:15px; height:15px; }
+    
+    .input-wrapper { flex:1; display:flex; flex-direction:column; background:rgba(255, 255, 255, 0.05); border:1px solid rgba(255, 255, 255, 0.08); border-radius:10px; padding:6px 10px; transition:all 0.2s ease; min-height:18px; max-height:120px; overflow-y:auto; }
+    .input-wrapper:focus-within { border-color:rgba(201, 168, 78, 0.4); background:rgba(255, 255, 255, 0.08); box-shadow:0 0 0 3px rgba(201, 168, 78, 0.1); }
+    .attach-preview { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:4px; display:none; }
+    .preview-img { height:40px; border-radius:4px; border:1px solid rgba(255,255,255,0.2); object-fit:cover; }
+    
+    .chat-input { border:none; background:transparent; padding:2px 0; color:#eaeae8; font-size:12.5px; font-family:inherit; outline:none; resize:none; width:100%; min-height:18px; }
     .chat-input::placeholder { color:#6b6b68; }
     .chat-send { width:32px; height:32px; display:flex; align-items:center; justify-content:center; background:rgba(255, 255, 255, 0.08); border:1px solid rgba(255, 255, 255, 0.04); border-radius:8px; color:#eaeae8; cursor:pointer; transition:all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1); flex-shrink:0; }
     .chat-send:hover { background:rgba(201, 168, 78, 0.15); color:#c9a84e; transform:translateY(-1px); }
@@ -202,7 +210,7 @@
   }
 
   /* ── Inline Popup (Shadow DOM) ─────────────────────────── */
-  function showPopup(px, py, question) {
+  function showPopup(px, py, question, imageB64 = null) {
     if (!isAlive()) { selfDestruct(); return; }
     rmPopup(); answering = true; pinned = false;
     const host = document.createElement('div');
@@ -259,7 +267,7 @@
       { id: 'simplify', icon: ICO.simplify, label: 'Simplify', prompt: `Rewrite the following answer in much simpler terms, as if explaining to a beginner. Keep it very short.\n\nOriginal answer:` },
       { id: 'expand', icon: ICO.expand, label: 'Expand', prompt: `Expand and elaborate on the following answer with more details, examples, and depth.\n\nOriginal answer:` },
       { id: 'translate', icon: ICO.translate, label: 'Translate', prompt: `Translate the following answer into simple, clear Hindi (Devanagari script). Keep formatting.\n\nOriginal answer:` },
-      { id: 'search', icon: ICO.search, label: 'Google it', prompt: null }
+      { id: 'livesearch', icon: ICO.search, label: 'Live Web Search', prompt: null }
     ];
     actions.forEach(a => {
       const btn = document.createElement('button'); btn.className = 'qbtn'; btn.id = `q-${a.id}`;
@@ -271,13 +279,27 @@
     // ── Chat Follow-up Bar ──
     const chatBar = document.createElement('div'); chatBar.className = 'chat-bar';
     chatBar.style.display = 'none';
-    const chatInput = document.createElement('input'); chatInput.className = 'chat-input';
-    chatInput.type = 'text'; chatInput.placeholder = 'Ask a follow-up...';
+    const chatAttach = document.createElement('button'); chatAttach.className = 'chat-attach';
+    chatAttach.title = "Take screenshot";
+    chatAttach.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>';
+    
+    const inputWrapper = document.createElement('div'); inputWrapper.className = 'input-wrapper';
+    const attachPreview = document.createElement('div'); attachPreview.className = 'attach-preview';
+    const chatInput = document.createElement('textarea'); chatInput.className = 'chat-input';
+    chatInput.rows = 1;
+    chatInput.placeholder = 'Ask a follow-up...';
     chatInput.setAttribute('autocomplete', 'off');
+    
+    inputWrapper.appendChild(attachPreview);
+    inputWrapper.appendChild(chatInput);
+    
     const chatSend = document.createElement('button'); chatSend.className = 'chat-send';
     chatSend.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>';
-    chatBar.appendChild(chatInput); chatBar.appendChild(chatSend);
+    chatBar.appendChild(chatAttach); chatBar.appendChild(inputWrapper); chatBar.appendChild(chatSend);
     aiView.appendChild(chatBar);
+
+    // Array to hold pending images
+    let pendingAttachments = [];
 
     // ── Type View ──
     const typeView = document.createElement('div');
@@ -294,7 +316,7 @@
 
     // ── Footer ──
     const foot = document.createElement('div'); foot.className = 'foot';
-    foot.textContent = 'OpenRouter \u00B7 Drag to move';
+    foot.textContent = 'Drag to move';
     popup.appendChild(foot);
 
     // ── Resize handle ──
@@ -305,8 +327,23 @@
     document.body.appendChild(host);
     curPopup = host;
 
-    let rawText = '', origQuestion = question;
-    let conversation = [{ role: 'user', content: `You are a precise answer engine. If the selection is a question, answer it directly. If it's a concept, explain briefly. If it's a problem (math, code, etc.), solve step by step. Be concise. Use markdown.\n\nSelected text: "${question}"` }];
+    let rawText = '', origQuestion = question || '';
+    let conversation = [];
+    
+    if (imageB64) {
+      const promptText = question || 'Extract and solve the main question shown in this image. If it contains a math problem, solve it step by step. If it contains text, explain or answer it. If it contains code, analyze and explain it.';
+      conversation.push({
+        role: 'user',
+        content: [
+          { type: 'text', text: promptText },
+          { type: 'image_url', image_url: { url: `data:image/png;base64,${imageB64}` } }
+        ]
+      });
+      origQuestion = 'Captured Area';
+    } else {
+      conversation.push({ role: 'user', content: `You are a precise answer engine. If the selection is a question, answer it directly. If it's a concept, explain briefly. If it's a problem (math, code, etc.), solve step by step. Be concise. Use markdown.\n\nSelected text: "${question}"` });
+    }
+    
     let currentStreamAbort = null;
 
     // ── Drag Logic ──
@@ -417,9 +454,67 @@
       shadow.querySelector('#q-expand')?.addEventListener('click', () => followUp('expand', actions[2].prompt + ` "${rawText}"`));
       // Translate
       shadow.querySelector('#q-translate')?.addEventListener('click', () => followUp('translate', actions[3].prompt + ` "${rawText}"`));
-      // Google it
-      shadow.querySelector('#q-search')?.addEventListener('click', () => {
-        window.open(`https://www.google.com/search?q=${encodeURIComponent(origQuestion)}`, '_blank');
+      
+      // Live Web Search (Local RAG)
+      shadow.querySelector('#q-livesearch')?.addEventListener('click', async () => {
+        if (answering) return;
+        answering = true;
+        
+        qbar.querySelectorAll('.qbtn').forEach(b => b.classList.add('loading'));
+        chatSend.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="6" width="12" height="12"/></svg>';
+        
+        const uBubble = document.createElement('div');
+        uBubble.className = 'msg msg-user';
+        uBubble.innerHTML = `<div class="msg-content">${esc("Live Search: " + origQuestion)}</div>`;
+        body.appendChild(uBubble);
+        
+        const loadingBubble = document.createElement('div');
+        loadingBubble.className = 'msg msg-ai';
+        loadingBubble.innerHTML = '<div class="msg-content"><div class="loading"><div class="bar-wrap"></div><span>Searching the web...</span></div></div>';
+        body.appendChild(loadingBubble);
+        body.scrollTop = body.scrollHeight;
+
+        let scrapedData = "";
+        try {
+          // Send to background to bypass CORS
+          const res = await chrome.runtime.sendMessage({ type: 'PERFORM_SEARCH', query: origQuestion });
+          if (res && res.html) {
+            const doc = new DOMParser().parseFromString(res.html, 'text/html');
+            const snippets = Array.from(doc.querySelectorAll('.result__snippet')).slice(0, 5);
+            
+            snippets.forEach((el, i) => {
+              const snippet = el.textContent.trim();
+              const titleEl = el.closest('.result')?.querySelector('.result__title');
+              const title = titleEl ? titleEl.textContent.trim() : 'Source';
+              if (snippet) scrapedData += `[${title}] ${snippet}\n`;
+            });
+
+            // Generic fallback if DDG structure changes
+            if (!scrapedData) {
+               const pTags = Array.from(doc.querySelectorAll('p')).slice(0, 5);
+               pTags.forEach((p, i) => { if (p.textContent.trim().length > 25) scrapedData += `[Result ${i+1}] ${p.textContent.trim()}\n`; });
+            }
+          }
+        } catch (e) {
+          console.error("[AiSolutions] Web search failed:", e);
+        }
+
+        loadingBubble.remove();
+        
+        let finalPrompt = "";
+        if (scrapedData) {
+           finalPrompt = `You are a real-time AI assistant. I have performed a live web search for my query. Here are the top results:\n\n${scrapedData}\n\nBased ONLY on the real-time data provided above, answer the following query: "${origQuestion}"\nIf the answer is not in the data, state that clearly, but try your best to synthesize a good answer from the snippets.`;
+        } else {
+           finalPrompt = `Answer the following query (Note: live web search failed or returned no context): "${origQuestion}"`;
+        }
+        
+        conversation.push({ role: 'user', content: finalPrompt });
+        
+        streamAnswer(conversation, body, () => {
+          qbar.querySelectorAll('.qbtn').forEach(b => b.classList.remove('loading'));
+          answering = false;
+          chatSend.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>';
+        });
       });
 
       // Chat follow-up
@@ -429,17 +524,44 @@
           if (currentStreamAbort) currentStreamAbort();
           return;
         }
-        if (!q) return;
+        if (!q && pendingAttachments.length === 0) return;
+        
+        const currentAttach = [...pendingAttachments];
+        pendingAttachments = [];
+        const attachPreviewEl = shadow.querySelector('.attach-preview');
+        if (attachPreviewEl) {
+          attachPreviewEl.innerHTML = '';
+          attachPreviewEl.style.display = 'none';
+        }
         chatInput.value = '';
         
-        // Add user bubble
         const uBubble = document.createElement('div');
         uBubble.className = 'msg msg-user';
-        uBubble.innerHTML = `<div class="msg-content">${esc(q)}</div>`;
+        
+        let htmlContent = '<div class="msg-content">';
+        currentAttach.forEach(b64 => {
+          htmlContent += `<img src="data:image/png;base64,${b64}" style="max-width:100%; border-radius:6px; margin-bottom:8px; border:1px solid rgba(255,255,255,0.1);" /><br/>`;
+        });
+        if (q) htmlContent += `${esc(q)}`;
+        else htmlContent += `Analyzed image${currentAttach.length > 1 ? 's' : ''}`;
+        htmlContent += '</div>';
+        
+        uBubble.innerHTML = htmlContent;
         body.appendChild(uBubble);
         body.scrollTop = body.scrollHeight;
 
-        conversation.push({ role: 'user', content: q });
+        if (currentAttach.length > 0) {
+          const payloadContent = [];
+          if (q) payloadContent.push({ type: 'text', text: q });
+          else payloadContent.push({ type: 'text', text: 'Analyze this image.' });
+          
+          currentAttach.forEach(b64 => {
+            payloadContent.push({ type: 'image_url', image_url: { url: `data:image/png;base64,${b64}` } });
+          });
+          conversation.push({ role: 'user', content: payloadContent });
+        } else {
+          conversation.push({ role: 'user', content: q });
+        }
         
         answering = true;
         chatSend.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="6" width="12" height="12"/></svg>';
@@ -455,6 +577,33 @@
       chatInput.addEventListener('keydown', (e) => {
         if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendFollowUp(); }
       });
+      chatAttach.addEventListener('click', () => {
+        if (answering) return;
+        chrome.runtime.sendMessage({ type: 'START_AREA_SELECT' });
+      });
+
+      const attachListener = (e) => {
+        if (answering) return;
+        const b64 = e.detail;
+        pendingAttachments.push(b64);
+        
+        const attachPreviewEl = shadow.querySelector('.attach-preview');
+        if (attachPreviewEl) {
+          attachPreviewEl.style.display = 'flex';
+          const img = document.createElement('img');
+          img.className = 'preview-img';
+          img.src = `data:image/png;base64,${b64}`;
+          attachPreviewEl.appendChild(img);
+        }
+        
+        // Scroll to bottom
+        body.scrollTop = body.scrollHeight;
+      };
+      
+      if (!host._cleanupAttach) {
+        document.addEventListener('aisolutions-chat-attach-image', attachListener);
+        host._cleanupAttach = () => document.removeEventListener('aisolutions-chat-attach-image', attachListener);
+      }
     }
 
     // ── Type-it Mode ──
@@ -633,7 +782,13 @@
     body.innerHTML = ''; // Clear initial thinking state
     const uBubble = document.createElement('div');
     uBubble.className = 'msg msg-user';
-    uBubble.innerHTML = `<div class="msg-content">${esc(origQuestion)}</div>`;
+    
+    if (imageB64) {
+      uBubble.innerHTML = `<div class="msg-content"><img src="data:image/png;base64,${imageB64}" style="max-width:100%; border-radius:6px; margin-bottom:8px; border:1px solid rgba(255,255,255,0.1);" /><br/>${esc(origQuestion)}</div>`;
+    } else {
+      uBubble.innerHTML = `<div class="msg-content">${esc(origQuestion)}</div>`;
+    }
+    
     body.appendChild(uBubble);
     body.scrollTop = body.scrollHeight;
 
@@ -755,17 +910,31 @@
 
   function rmPopup() {
     if (!curPopup) { answering = false; return; }
-    // Cleanup drag/resize listeners
-    curPopup._cleanupDrag?.();
-    curPopup._cleanupResize?.();
+    const hostToRemove = curPopup;
+    // Cleanup listeners
+    hostToRemove._cleanupDrag?.();
+    hostToRemove._cleanupResize?.();
+    hostToRemove._cleanupAttach?.(); // Prevent ghost popup from stealing screenshot attach events
+    
+    // Immediately detach so a new popup can be spawned without conflicts
+    if (curPopup === hostToRemove) {
+      curPopup = null; 
+      answering = false; 
+      pinned = false; 
+    }
+    
     try {
-      const s = curPopup.shadowRoot;
+      const s = hostToRemove.shadowRoot;
       if (s) {
         const p = s.querySelector('.popup');
-        if (p) { p.classList.add('closing'); setTimeout(() => { curPopup?.remove(); curPopup = null; }, 150); answering = false; pinned = false; return; }
+        if (p) { 
+          p.classList.add('closing'); 
+          setTimeout(() => hostToRemove.remove(), 150); 
+          return; 
+        }
       }
     } catch (e) {}
-    curPopup.remove(); curPopup = null; answering = false; pinned = false;
+    hostToRemove.remove();
   }
 
   /* ── Markdown + LaTeX ────────────────────────────────────── */
@@ -1026,11 +1195,29 @@
   });
 
   document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') { rmBtn(); rmPopup(); }
+    if (e.key === 'Escape') {
+      // Prevent closing if area selector is currently active
+      if (document.getElementById('aisolutions-area-overlay')) return;
+      rmBtn(); rmPopup();
+    }
   });
-document.addEventListener('aisolutions-answer', (e) => {
-  if (!isAlive()) { selfDestruct(); return; }
-  if (!e.detail || answering) return;
-  showPopup(scrollX + innerWidth / 2 - 200, scrollY + 80, e.detail);
-});
+
+  document.addEventListener('aisolutions-answer', (e) => {
+    if (!isAlive()) { selfDestruct(); return; }
+    if (!e.detail || answering) return;
+    showPopup(scrollX + innerWidth / 2 - 200, scrollY + 80, e.detail);
+  });
+
+  document.addEventListener('aisolutions-answer-image', (e) => {
+    if (!isAlive()) { selfDestruct(); return; }
+    if (!e.detail) return;
+    const { b64, x, y, w, h } = e.detail;
+    
+    // If popup is already active and not answering, just add to chat
+    if (curPopup && !answering) {
+       document.dispatchEvent(new CustomEvent('aisolutions-chat-attach-image', { detail: b64 }));
+    } else if (!answering) {
+       showPopup(scrollX + x + (w / 2) - 200, scrollY + y + h + 15, null, b64);
+    }
+  });
 })();

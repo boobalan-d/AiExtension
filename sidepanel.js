@@ -1,14 +1,14 @@
 /**
  * AiSolutions — Side Panel Logic
- * OpenRouter API · Smart model routing · SSE Streaming · Exponential backoff
+ * GitHub Models API · Smart model routing · SSE Streaming · Exponential backoff
  */
 (() => {
   'use strict';
 
   // Smart Model Router: text-only vs vision
-  const MODEL_TEXT = 'google/gemma-4-26b-a4b-it:free';
-  const MODEL_VISION = 'google/gemma-4-31b-it:free';
-  const API_URL = 'https://openrouter.ai/api/v1/chat/completions';
+  const MODEL_TEXT = 'DeepSeek-V3';
+  const MODEL_VISION = 'gpt-4o-mini';
+  const API_URL = 'https://models.inference.ai.azure.com/chat/completions';
   const REFERER = 'https://github.com/ai-sidekick';
   const SK_KEY = 'aisolutions_api_key';
   const SK_HIST = 'aisolutions_chat_history';
@@ -67,12 +67,11 @@
     }
   }
 
-  /* ── OpenRouter Headers Builder ────────────────────────── */
-  function openRouterHeaders() {
+  /* ── Headers Builder ─────────────────────────────────────── */
+  function apiHeaders() {
     return {
       'Authorization': 'Bearer ' + apiKey,
-      'Content-Type': 'application/json',
-      'HTTP-Referer': REFERER
+      'Content-Type': 'application/json'
     };
   }
 
@@ -278,9 +277,9 @@
     return accumulatedText || 'No response generated.';
   }
 
-  /* ── OpenRouter: Text ──────────────────────────────────── */
+  /* ── API: Text ─────────────────────────────────────────── */
   async function callText(prompt) {
-    if (!apiKey) { addErrorBubble('No API key configured. Open settings to add your OpenRouter key.'); return; }
+    if (!apiKey) { addErrorBubble('No API key configured. Open settings to add your key.'); return; }
     isProcessing = true;
     const loader = addLoader();
     try {
@@ -288,17 +287,37 @@
       convHistory.push({ role: 'user', content: prompt });
       const recent = convHistory.slice(-10);
 
-      const res = await fetchWithRetry(API_URL, {
-        method: 'POST',
-        headers: openRouterHeaders(),
-        body: JSON.stringify({
-          model: MODEL_TEXT,
-          messages: recent,
-          max_tokens: 2048,
-          temperature: 0.7,
-          stream: true
-        })
-      });
+      let res;
+      try {
+        res = await fetchWithRetry(API_URL, {
+          method: 'POST',
+          headers: apiHeaders(),
+          body: JSON.stringify({
+            model: MODEL_TEXT,
+            messages: recent,
+            max_tokens: 2048,
+            temperature: 0.7,
+            stream: true
+          })
+        });
+      } catch (err) {
+        if (err.message.toLowerCase().includes('unknown model') || err.message.toLowerCase().includes('invalid model') || err.message.toLowerCase().includes('not found')) {
+          console.log(`[AiSolutions] Model ${MODEL_TEXT} unavailable. Falling back to gpt-4o-mini...`);
+          res = await fetchWithRetry(API_URL, {
+            method: 'POST',
+            headers: apiHeaders(),
+            body: JSON.stringify({
+              model: 'gpt-4o-mini',
+              messages: recent,
+              max_tokens: 2048,
+              temperature: 0.7,
+              stream: true
+            })
+          });
+        } else {
+          throw err;
+        }
+      }
 
       const txt = await processStream(res, loader);
       convHistory.push({ role: 'assistant', content: txt });
@@ -310,7 +329,7 @@
 
   /* ── OpenRouter: Vision ────────────────────────────────── */
   async function callMultimodal(prompt, b64) {
-    if (!apiKey) { addErrorBubble('No API key configured. Open settings to add your OpenRouter key.'); return; }
+    if (!apiKey) { addErrorBubble('No API key configured. Open settings to add your key.'); return; }
     isProcessing = true;
     const loader = addLoader();
     try {

@@ -78,7 +78,14 @@
       if (res.error) { cleanup(); return; }
       const b64 = await crop(res.dataUrl, x, y, w, h);
       flash();
-      chrome.runtime.sendMessage({ type: 'SCREENSHOT_CAPTURED', imageBase64: b64, dimensions: { x, y, w, h } });
+      
+      // Send directly to the inline popup content script instead of sidepanel
+      if (window.__aisolutions_content_loaded) {
+        document.dispatchEvent(new CustomEvent('aisolutions-answer-image', { detail: { b64, x, y, w, h } }));
+      } else {
+        // Fallback to sidepanel if inline script isn't loaded
+        chrome.runtime.sendMessage({ type: 'SCREENSHOT_CAPTURED', imageBase64: b64, dimensions: { x, y, w, h } });
+      }
     } catch (e) { console.error('[AiSolutions]', e); }
     setTimeout(cleanup, 200);
   });

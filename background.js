@@ -1,19 +1,15 @@
 /**
  * AiSolutions — Background Service Worker
- * OpenRouter API · Model cascade with timeout · SSE streaming · Context menus
+ * GitHub Models API · Model cascade with timeout · SSE streaming · Context menus
  */
 
 /* ── Constants ───────────────────────────────────────────── */
-const API_URL = 'https://openrouter.ai/api/v1/chat/completions';
+const API_URL = 'https://models.inference.ai.azure.com/chat/completions';
 const REFERER = 'https://github.com/ai-sidekick';
 
 // Model cascade: try fast models first, fallback if they queue too long
-const INLINE_MODELS = [
-  'google/gemma-4-26b-a4b-it:free',     // Compact Gemma 4, fast
-  'qwen/qwen3-coder:free',              // Reliable coder model
-'openrouter/free'                       // Let OpenRouter pick
-];
-const INLINE_TIMEOUT_MS = 12000; // 12 seconds per model attempt
+const INLINE_MODELS =  ['DeepSeek-V3', 'gpt-4o', 'gpt-4o-mini'];
+const INLINE_TIMEOUT_MS = 25000; // 12 seconds per model attempt
 
 /* ── Side Panel ──────────────────────────────────────────── */
 chrome.action.onClicked.addListener(async (tab) => {
@@ -71,8 +67,26 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
       break;
     case 'explain-image':
       if (info.srcUrl) {
-        await chrome.sidePanel.open({ tabId: tab.id });
-        setTimeout(() => chrome.runtime.sendMessage({ type: 'IMAGE_URL', url: info.srcUrl, source: tab.url }), 500);
+        try {
+          const res = await fetch(info.srcUrl);
+          const buffer = await res.arrayBuffer();
+          const bytes = new Uint8Array(buffer);
+          let binary = '';
+          for (let i = 0; i < bytes.byteLength; i++) binary += String.fromCharCode(bytes[i]);
+          const b64 = btoa(binary);
+
+          await chrome.scripting.executeScript({
+            target: { tabId: tab.id },
+            func: (b64) => {
+              if (window.__aisolutions_content_loaded) {
+                document.dispatchEvent(new CustomEvent('aisolutions-answer-image', { 
+                  detail: { b64, x: innerWidth / 2, y: 100, w: 0, h: 0 } 
+                }));
+              }
+            },
+            args: [b64]
+          });
+        } catch (e) {}
       }
       break;
   }
@@ -109,6 +123,24 @@ async function handlePageSummarize(tab) {
 
 /* ── Message Relay ───────────────────────────────────────── */
 chrome.runtime.onMessage.addListener((msg, sender, respond) => {
+  if (msg.type === 'START_AREA_SELECT' && sender.tab) {
+    chrome.scripting.executeScript({ target: { tabId: sender.tab.id }, files: ['area_selector.js'] });
+    respond({ status: 'ok' });
+    return true;
+  }
+  if (msg.type === 'PERFORM_SEARCH') {
+    fetch('https://html.duckduckgo.com/html/?q=' + encodeURIComponent(msg.query), {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+        'Accept-Language': 'en-US,en;q=0.5'
+      }
+    })
+      .then(r => r.text())
+      .then(html => respond({ html }))
+      .catch(err => respond({ error: err.message }));
+    return true;
+  }
   if (msg.type === 'TEXT_SELECTION' && sender.tab) {
     chrome.sidePanel.open({ tabId: sender.tab.id }).then(() =>
       setTimeout(() => chrome.runtime.sendMessage(msg), 300)
@@ -136,25 +168,55 @@ async function tryStreamModel(model, key, payload, port) {
   const timer = setTimeout(() => controller.abort(), INLINE_TIMEOUT_MS);
 
   try {
-    port.postMessage({ type: 'status', text: `Connecting to ${model.split('/')[1]?.split(':')[0] || model}...` });
-
     let messages = payload.messages;
     if (!messages) {
       messages = [{ role: 'user', content: `You are a precise answer engine. If the selection is a question, answer it directly. If it's a concept, explain briefly. If it's a problem (math, code, etc.), solve step by step. Be concise. Use markdown.\n\nSelected text: "${payload.text}"` }];
     }
 
-    const res = await fetch(API_URL, {
+    const hasImage = messages.some(m => Array.isArray(m.content) && m.content.some(part => part.type === 'image_url'));
+    let finalModel = hasImage ? 'gpt-4o-mini' : model;
+
+    port.postMessage({ type: 'status', text: `Connecting to ${finalModel.split('/')[1]?.split(':')[0] || finalModel}...` });
+
+    let res = await fetch(API_URL, {
       method: 'POST',
-      headers: { 'Authorization': 'Bearer ' + key, 'Content-Type': 'application/json', 'HTTP-Referer': REFERER },
+      headers: { 'Authorization': 'Bearer ' + key, 'Content-Type': 'application/json' },
       signal: controller.signal,
       body: JSON.stringify({
-        model,
+        model: finalModel,
         messages,
         max_tokens: 8192,
         temperature: 0.3,
         stream: true
       })
     });
+
+    // Handle unknown model internally by falling back to gpt-4o-mini
+    if (!res.ok) {
+      let errStr = `API Error ${res.status}`;
+      try { const d = await res.json(); if (d?.error?.message) errStr = d.error.message; } catch (e) {}
+      
+      if (errStr.toLowerCase().includes('unknown model') || errStr.toLowerCase().includes('invalid model') || errStr.toLowerCase().includes('not found')) {
+        console.log(`[AiSolutions] Model ${finalModel} unavailable on Azure. Auto-falling back to gpt-4o-mini...`);
+        finalModel = 'gpt-4o-mini';
+        port.postMessage({ type: 'status', text: `Switching to fallback model...` });
+        
+        res = await fetch(API_URL, {
+          method: 'POST',
+          headers: { 'Authorization': 'Bearer ' + key, 'Content-Type': 'application/json' },
+          signal: controller.signal,
+          body: JSON.stringify({
+            model: finalModel,
+            messages,
+            max_tokens: 8192,
+            temperature: 0.3,
+            stream: true
+          })
+        });
+      } else {
+        throw new Error(errStr);
+      }
+    }
 
     clearTimeout(timer);
 
@@ -206,7 +268,9 @@ async function tryStreamModel(model, key, payload, port) {
       console.log(`[AiSolutions] ${model} timed out after ${INLINE_TIMEOUT_MS}ms, trying next...`);
       return false; // Signal to try next model
     }
-    if (e.message === 'RATE_LIMITED') return false;
+    if (e.message === 'RATE_LIMITED' || (e.message && e.message.includes('429'))) {
+      throw new Error('RATE_LIMITED');
+    }
     throw e; // Real error, don't retry
   }
 }
@@ -227,27 +291,46 @@ chrome.runtime.onConnect.addListener((port) => {
 
     try {
       let success = false;
+      let lastError = ''; // Keep track of the real error
 
       for (let i = 0; i < INLINE_MODELS.length; i++) {
         const model = INLINE_MODELS[i];
         try {
           success = await tryStreamModel(model, key, msg, port);
           if (success) break;
-          // Model timed out or rate-limited, try next
+          
           if (i < INLINE_MODELS.length - 1) {
-            port.postMessage({ type: 'status', text: 'Switching to faster model...' });
+            port.postMessage({ type: 'status', text: 'Switching to fallback model...' });
           }
         } catch (e) {
-          // Real API error (not timeout), report it
+          lastError = e.message; 
+          // If it's a real rate limit from Azure, stop trying and tell the user
+          if (e.message === 'RATE_LIMITED' || (e.message && e.message.includes('429'))) {
+             port.postMessage({ type: 'error', error: 'Rate limit reached (15 per minute). Please wait 60 seconds.' });
+             return;
+          }
+          // For other hard errors, report them
           port.postMessage({ type: 'error', error: e.message });
           return;
         }
       }
 
+      // ULTIMATE FALLBACK: If primary models failed/timed out, aggressively attempt gpt-4o-mini
+      if (!success && !lastError) {
+         console.log('[AiSolutions] Primary model timed out. Forcing ultimate fallback to gpt-4o-mini...');
+         port.postMessage({ type: 'status', text: 'Models busy. Trying gpt-4o-mini...' });
+         try {
+           success = await tryStreamModel('gpt-4o-mini', key, msg, port);
+         } catch (e) {
+           lastError = e.message;
+         }
+      }
+
       if (success) {
         port.postMessage({ type: 'done' });
       } else {
-        port.postMessage({ type: 'error', error: 'All models are busy. Please try again in a moment.' });
+        // Fallback also failed or timed out
+        port.postMessage({ type: 'error', error: lastError || 'Models took too long to respond. Please try again.' });
       }
 
     } catch (e) {
