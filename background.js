@@ -8,7 +8,6 @@ const API_URL = 'https://models.inference.ai.azure.com/chat/completions';
 const REFERER = 'https://github.com/ai-sidekick';
 
 // Model cascade: try fast models first, fallback if they queue too long
-const INLINE_MODELS =  ['DeepSeek-V3', 'gpt-4o', 'gpt-4o-mini'];
 const INLINE_TIMEOUT_MS = 25000; // 12 seconds per model attempt
 
 /* ── Side Panel ──────────────────────────────────────────── */
@@ -174,7 +173,15 @@ async function tryStreamModel(model, key, payload, port) {
     }
 
     const hasImage = messages.some(m => Array.isArray(m.content) && m.content.some(part => part.type === 'image_url'));
-    let finalModel = hasImage ? 'gpt-4o-mini' : model;
+    let finalModel = model;
+    
+    // Automatically force a vision-capable model if images are present and the selected model lacks vision natively
+    if (hasImage) {
+      const visionModels = ['gpt-4o', 'gpt-4o-mini', 'Meta-Llama-3.2-90B-Vision-Instruct'];
+      if (!visionModels.includes(model)) {
+        finalModel = 'gpt-4o-mini';
+      }
+    }
 
     port.postMessage({ type: 'status', text: `Connecting to ${finalModel.split('/')[1]?.split(':')[0] || finalModel}...` });
 
@@ -232,10 +239,10 @@ async function tryStreamModel(model, key, payload, port) {
     const decoder = new TextDecoder('utf-8');
     let buffer = '', gotContent = false;
 
-    // Secondary timeout: if we got a 200 but no content arrives in 10s, abort
+    // Secondary timeout: if we got a 200 but no content arrives in 25s, abort
     let contentTimer = setTimeout(() => {
       if (!gotContent) { reader.cancel(); }
-    }, 10000);
+    }, 25000);
 
     while (true) {
       const { done, value } = await reader.read();
@@ -293,13 +300,16 @@ chrome.runtime.onConnect.addListener((port) => {
       let success = false;
       let lastError = ''; // Keep track of the real error
 
-      for (let i = 0; i < INLINE_MODELS.length; i++) {
-        const model = INLINE_MODELS[i];
+      const reqModel = msg.model || 'gpt-4o-mini';
+      const modelsToTry = reqModel === 'gpt-4o-mini' ? [reqModel] : [reqModel, 'gpt-4o-mini'];
+
+      for (let i = 0; i < modelsToTry.length; i++) {
+        const model = modelsToTry[i];
         try {
           success = await tryStreamModel(model, key, msg, port);
           if (success) break;
           
-          if (i < INLINE_MODELS.length - 1) {
+          if (i < modelsToTry.length - 1) {
             port.postMessage({ type: 'status', text: 'Switching to fallback model...' });
           }
         } catch (e) {
@@ -313,17 +323,6 @@ chrome.runtime.onConnect.addListener((port) => {
           port.postMessage({ type: 'error', error: e.message });
           return;
         }
-      }
-
-      // ULTIMATE FALLBACK: If primary models failed/timed out, aggressively attempt gpt-4o-mini
-      if (!success && !lastError) {
-         console.log('[AiSolutions] Primary model timed out. Forcing ultimate fallback to gpt-4o-mini...');
-         port.postMessage({ type: 'status', text: 'Models busy. Trying gpt-4o-mini...' });
-         try {
-           success = await tryStreamModel('gpt-4o-mini', key, msg, port);
-         } catch (e) {
-           lastError = e.message;
-         }
       }
 
       if (success) {

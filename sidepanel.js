@@ -6,7 +6,20 @@
   'use strict';
 
   // Smart Model Router: text-only vs vision
-  const MODEL_TEXT = 'DeepSeek-V3';
+  const GITHUB_MODELS = [
+    { id: 'DeepSeek-V3', label: 'DeepSeek V3' },
+    { id: 'DeepSeek-R1', label: 'DeepSeek R1' },
+    { id: 'gpt-4o-mini', label: 'GPT-4o-Mini (Fast)' },
+    { id: 'gpt-4o', label: 'GPT-4o (Smart)' },
+    { id: 'o1-mini', label: 'o1-mini (Reasoning)' },
+    { id: 'o3-mini', label: 'o3-mini (Reasoning)' },
+    { id: 'Phi-4', label: 'Phi-4 (Efficient)' },
+    { id: 'Meta-Llama-3.1-405B-Instruct', label: 'Llama 3.1 405B' },
+    { id: 'Mistral-large-2407', label: 'Mistral Large' },
+    { id: 'Cohere-command-r-plus-08-2024', label: 'Command R+' }
+  ];
+  let currentModel = 'gpt-4o-mini';
+  
   const MODEL_VISION = 'gpt-4o-mini';
   const API_URL = 'https://models.inference.ai.azure.com/chat/completions';
   const REFERER = 'https://github.com/ai-sidekick';
@@ -77,10 +90,26 @@
 
   /* ── Init ──────────────────────────────────────────────── */
   async function init() {
-    const stored = await chrome.storage.local.get(SK_KEY);
+    const stored = await chrome.storage.local.get([SK_KEY, SK_HIST, 'aisolutions_model']);
     apiKey = stored[SK_KEY] || '';
-    const hist = await chrome.storage.local.get(SK_HIST);
-    if (hist[SK_HIST]) restoreHistory(hist[SK_HIST]);
+    if (stored['aisolutions_model']) currentModel = stored['aisolutions_model'];
+    
+    // Init model selector
+    const modelSelect = $('model-select');
+    if (modelSelect) {
+      GITHUB_MODELS.forEach(m => {
+        const opt = document.createElement('option');
+        opt.value = m.id; opt.textContent = m.label;
+        modelSelect.appendChild(opt);
+      });
+      modelSelect.value = currentModel;
+      modelSelect.addEventListener('change', (e) => {
+        currentModel = e.target.value;
+        chrome.storage.local.set({ aisolutions_model: currentModel });
+      });
+    }
+
+    if (stored[SK_HIST]) restoreHistory(stored[SK_HIST]);
     setupListeners();
     chrome.runtime.onMessage.addListener(onMessage);
     if (!apiKey) setTimeout(showSettings, 600);
@@ -124,8 +153,6 @@
       return;
     }
 
-    // Bypass the OpenRouter network validation ping.
-    // Free models can queue during peak load, causing false-positive validation errors.
     apiKey = key;
     await chrome.storage.local.set({ [SK_KEY]: key });
 
@@ -293,7 +320,7 @@
           method: 'POST',
           headers: apiHeaders(),
           body: JSON.stringify({
-            model: MODEL_TEXT,
+            model: currentModel,
             messages: recent,
             max_tokens: 2048,
             temperature: 0.7,
@@ -302,7 +329,7 @@
         });
       } catch (err) {
         if (err.message.toLowerCase().includes('unknown model') || err.message.toLowerCase().includes('invalid model') || err.message.toLowerCase().includes('not found')) {
-          console.log(`[AiSolutions] Model ${MODEL_TEXT} unavailable. Falling back to gpt-4o-mini...`);
+          console.log(`[AiSolutions] Model ${currentModel} unavailable. Falling back to gpt-4o-mini...`);
           res = await fetchWithRetry(API_URL, {
             method: 'POST',
             headers: apiHeaders(),
@@ -321,7 +348,6 @@
 
       const txt = await processStream(res, loader);
       convHistory.push({ role: 'assistant', content: txt });
-      // Only call saveHistory() after the stream has completely finished
       saveHistory();
     } catch (e) { loader.remove(); addErrorBubble(e.message); }
     finally { isProcessing = false; }
@@ -333,12 +359,17 @@
     isProcessing = true;
     const loader = addLoader();
     try {
-      // OpenAI vision format: content as array of parts
+      let finalModel = currentModel;
+      const visionModels = ['gpt-4o', 'gpt-4o-mini', 'Meta-Llama-3.2-90B-Vision-Instruct'];
+      if (!visionModels.includes(currentModel)) {
+        finalModel = 'gpt-4o-mini';
+      }
+
       const res = await fetchWithRetry(API_URL, {
         method: 'POST',
-        headers: openRouterHeaders(),
+        headers: apiHeaders(),
         body: JSON.stringify({
-          model: MODEL_VISION,
+          model: finalModel,
           messages: [{
             role: 'user',
             content: [
@@ -354,7 +385,6 @@
 
       const txt = await processStream(res, loader);
       convHistory.push({ role: 'assistant', content: txt });
-      // Only call saveHistory() after the stream has completely finished
       saveHistory();
     } catch (e) { loader.remove(); addErrorBubble(e.message); }
     finally { isProcessing = false; }

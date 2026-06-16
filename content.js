@@ -7,6 +7,27 @@
   if (window.__aisolutions_content_loaded) return;
   window.__aisolutions_content_loaded = true;
 
+  const GITHUB_MODELS = [
+    { id: 'DeepSeek-V3-0324', label: 'DeepSeek-V3-0324' },
+    { id: 'DeepSeek-R1', label: 'DeepSeek R1' },
+    { id: 'gpt-4o-mini', label: 'GPT-4o-Mini' },
+    { id: 'gpt-4o', label: 'GPT-4o' },
+    { id: 'o1-mini', label: 'o1-mini' },
+    { id: 'o3-mini', label: 'o3-mini' },
+    { id: 'Phi-4', label: 'Phi-4' },
+    { id: 'Meta-Llama-3.1-405B-Instruct', label: 'Llama 405B' },
+    { id: 'Mistral-large-2407', label: 'Mistral Large' },
+    { id: 'Cohere-command-r-plus-08-2024', label: 'Command R+' }
+  ];
+  let globalCurrentModel = 'DeepSeek-V3-0324';
+  
+  // Sync initial model from storage
+  try {
+    chrome.storage.local.get('aisolutions_model', (res) => {
+      if (res.aisolutions_model) globalCurrentModel = res.aisolutions_model;
+    });
+  } catch (e) {}
+
   // Self-destruct: if extension reloaded, clean up everything and stop
   function selfDestruct() {
     rmBtn(); rmPopup();
@@ -43,11 +64,15 @@
     .popup.closing { animation:popOut 0.2s cubic-bezier(0.8, 0, 0.2, 1) forwards; }
 
     /* Draggable header */
-    .hdr { display:flex; align-items:center; justify-content:space-between; padding:10px 14px; background:transparent; border-bottom:1px solid rgba(255, 255, 255, 0.05); cursor:grab; user-select:none; -webkit-user-select:none; }
+    .hdr { display:flex; align-items:center; justify-content:space-between; padding:10px 12px; background:transparent; border-bottom:1px solid rgba(255, 255, 255, 0.05); cursor:grab; user-select:none; -webkit-user-select:none; gap:6px; flex-wrap:nowrap; overflow:hidden; }
     .hdr:active { cursor:grabbing; }
-    .hdr-left { display:flex; align-items:center; gap:8px; font-size:11px; font-weight:600; color:#b0b0a8; letter-spacing:0.3px; }
+    .hdr-left { display:flex; align-items:center; gap:8px; font-size:11px; font-weight:600; color:#b0b0a8; letter-spacing:0.3px; flex:1; min-width:0; }
     
-    .popup-tabs { display:flex; gap:4px; background:rgba(0, 0, 0, 0.25); padding:3px; border-radius:8px; border:1px solid rgba(255, 255, 255, 0.04); }
+    .model-select { background-color:transparent; border:none; color:#c9a84e; font-family:inherit; font-size:11px; font-weight:600; padding:0 14px 0 0; outline:none; cursor:pointer; margin-left:2px; appearance:none; -webkit-appearance:none; transition:all 0.2s ease; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%23c9a84e' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right center; max-width:110px; text-overflow: ellipsis; white-space:nowrap; }
+    .model-select option { background:#16161a; color:#eaeae8; font-weight:500; }
+    .model-select:hover { color:#dfc06a; }
+
+    .popup-tabs { display:flex; gap:4px; background:rgba(0, 0, 0, 0.25); padding:3px; border-radius:8px; border:1px solid rgba(255, 255, 255, 0.04); flex-shrink:0; }
     .ptab { display:flex; align-items:center; gap:6px; padding:4px 10px; font-size:11px; font-weight:600; font-family:inherit; color:#888884; background:transparent; border:none; border-radius:6px; cursor:pointer; transition:all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1); text-transform:uppercase; letter-spacing:0.4px; }
     .ptab:hover { color:#eaeae8; }
     .ptab.active { background:rgba(255, 255, 255, 0.08); color:#eaeae8; box-shadow:0 1px 2px rgba(0, 0, 0, 0.2); }
@@ -231,13 +256,33 @@
           <button class="ptab active" id="tab-ai">${ICO.bolt} Answer</button>
           <button class="ptab" id="tab-type">${ICO.keyboard} Type It</button>
         </div>
-        <span class="grip">${ICO.move}</span>
       </div>
       <div class="acts">
         <button class="ib" id="pin" title="Pin (keep open)">${ICO.pin}</button>
         <button class="ib" id="cp" title="Copy answer">${ICO.copy}</button>
         <button class="ib" id="cl" title="Close (Esc)">&#10005;</button>
       </div>`;
+      
+    // Append model selector
+    const ms = document.createElement('select');
+    ms.className = 'model-select';
+    ms.title = 'Select AI Model';
+    GITHUB_MODELS.forEach(m => {
+       const opt = document.createElement('option'); opt.value = m.id; opt.textContent = m.label; ms.appendChild(opt);
+    });
+    ms.value = globalCurrentModel;
+    ms.addEventListener('change', (e) => {
+       globalCurrentModel = e.target.value;
+       chrome.storage.local.set({ aisolutions_model: globalCurrentModel });
+    });
+    hdr.querySelector('.hdr-left').appendChild(ms);
+    
+    // Add drag grip after select
+    const grip = document.createElement('span');
+    grip.className = 'grip';
+    grip.innerHTML = ICO.move;
+    hdr.querySelector('.hdr-left').appendChild(grip);
+
     popup.appendChild(hdr);
 
     // ── Views Container ──
@@ -349,7 +394,8 @@
     // ── Drag Logic ──
     let isDragging = false, dragOffX = 0, dragOffY = 0;
     hdr.addEventListener('mousedown', (e) => {
-      if (e.target.closest('.ib')) return; // Don't drag when clicking buttons
+      // Don't drag when clicking buttons, tabs, or the model select dropdown
+      if (e.target.closest('.ib') || e.target.closest('.ptab') || e.target.closest('.model-select')) return; 
       isDragging = true;
       dragOffX = e.clientX - host.getBoundingClientRect().left;
       dragOffY = e.clientY - host.getBoundingClientRect().top;
@@ -847,7 +893,7 @@
         finish();
       };
 
-      port.postMessage({ type: 'INLINE_ANSWER_STREAM', messages });
+      port.postMessage({ type: 'INLINE_ANSWER_STREAM', messages, model: globalCurrentModel });
       port.onMessage.addListener((msg) => {
         if (aborted) return;
         if (msg.type === 'status' && statusEl) {
@@ -892,8 +938,27 @@
               typeView.classList.add('active'); aiView.classList.remove('active');
             });
 
+            const btnRetry = document.createElement('button');
+            btnRetry.className = 'msg-btn';
+            btnRetry.innerHTML = `${ICO.retry} Retry`;
+            btnRetry.title = 'Regenerate answer with current model';
+            btnRetry.addEventListener('click', () => {
+              if (answering) return;
+              // Remove the assistant's previous response from context
+              conversation.pop();
+              answering = true;
+              qbar.querySelectorAll('.qbtn').forEach(b => b.classList.add('loading'));
+              chatSend.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="6" width="12" height="12"/></svg>';
+              streamAnswer(conversation, body, () => {
+                qbar.querySelectorAll('.qbtn').forEach(b => b.classList.remove('loading'));
+                answering = false;
+                chatSend.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>';
+              });
+            });
+
             actionsDiv.appendChild(btnCopy);
             actionsDiv.appendChild(btnTypeIt);
+            actionsDiv.appendChild(btnRetry);
             aiBubble.appendChild(actionsDiv);
             targetContainer.scrollTop = targetContainer.scrollHeight;
           }
